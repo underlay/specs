@@ -15,7 +15,7 @@ A package server exposes a REST HTTP API for managing Underlay resources.
   - [Last-Modified](#last-modified)
   - [If-Match](#if-match)
   - [If-Unmodified-Since](#if-unmodified-since)
-  - [If-None-Math](#if-none-match)
+  - [If-None-Match](#if-none-match)
   - [If-Modified-Since](#if-modified-since)
   - [Accept](#accept)
   - [Content-Type](#content-type)
