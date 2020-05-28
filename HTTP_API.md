@@ -6,6 +6,31 @@ A package server exposes a REST HTTP API for managing Underlay resources.
 - _Files_ are arbitrary byte arrays, with a single explicit MIME type and a known integer size in bytes
 - _Packages_ are a kind of container analogous to a directory or a Git repository. Packages have metadata like schemas and provenance and contain assertions, files, and other packages.
 
+## Table of Contents
+
+- [Resources vs representations](#resources-vs-representations)
+- [Headers](#headers)
+  - [Link](#link)
+  - [ETag](#etag)
+  - [Last-Modified](#last-modified)
+  - [If-Match](#if-match)
+  - [If-Unmodified-Since](#if-unmodified-since)
+  - [If-None-Math](#if-none-match)
+  - [If-Modified-Since](#if-modified-since)
+  - [Accept](#accept)
+  - [Content-Type](#content-type)
+  - [Content-Length](#content-length)
+  - [Location](#location)
+- [Methods](#methods)
+  - [GET](#get)
+  - [HEAD](#head)
+  - [POST](#post)
+  - [PUT](#put)
+  - [MKCOL](#mkcol)
+  - [DELETE](#delete)
+
+## Resources vs representations
+
 Like all REST services, package servers implicitly distinguish between abstract _resources_ and concrete _representations_. A resource is a conceptual target identified by a URL; a representation of a resource is a physical materialization in some known format of a version of that resource at a point in time. The REST API interfaces between the two, resolving requests for resources into concrete representations.
 
 Abstractly, an assertion is a set of graphs of relations between entities; concretely they are represented as either [N-Quads](https://www.w3.org/TR/n-quads/) files or [JSON-LD](https://www.w3.org/TR/json-ld11) documents. Similarly, a package is a resource that contains other resources. Package representations also use RDF; however, unlike an assertion, whose representation is an entire RDF dataset, a package representation is a specific blank node (called the _package subject_) within an RDF dataset (containing triples that describe the package metadata and contents using this package subject). 
@@ -13,6 +38,8 @@ Abstractly, an assertion is a set of graphs of relations between entities; concr
 Representing a package subject is challenging because RDF blank nodes are anonymous by design. Package servers solve this by leveraging the [Universal Dataset Normalization Algorithm](https://json-ld.github.io/normalization/spec/) (URDNA2015) published by the [W3C Credentials Community Group](https://www.w3.org/community/credentials/), which serializes an abstract RDF dataset to a normalized N-Quads representation. The normalized result is canonical in the sense that any two isomorphic datasets will map to exactly the same representation. Part of the algorithm involves assigning canonical labels to every blank node in the dataset, so package servers use this canonical blank node label as fragment identifiers in a `Link` header with `rel="self"` to unambiguously represent packages. In most cases, the link target will be `<#c14n0>`, since the package subject will typically be the only blank node in the dataset.
 
 ## Headers
+
+This section describes the request and response headers expected of package servers.
 
 ### `Link`
 
@@ -106,6 +133,8 @@ A `Content-Length` field is returned with every HTTP response with a value of th
 A `Location` field is included in responses to successful `POST` requests. The value of the `Location` field is the relative URL of the resource that was just created.
 
 ## Methods
+
+This section describes the methods clients use to interact with package servers.
 
 ### `GET`
 
