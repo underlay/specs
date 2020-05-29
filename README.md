@@ -1,3 +1,3 @@
 # specs
 
-- [Package Server HTTP API](HTTP_API.md)
+- [Package Server HTTP API](http_api.md)
