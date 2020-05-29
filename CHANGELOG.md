@@ -3,4 +3,4 @@
 ## [Unreleased]
 
 ### Added
-- First draft of [http_api.md](HTTP_API.md) by [@joeltg](https://github.com/joeltg)
+- First draft of [http_api.md](http_api.md) by [@joeltg](https://github.com/joeltg)
