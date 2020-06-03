@@ -33,10 +33,6 @@ A package server exposes a REST HTTP API for managing Underlay resources.
 
 Like all REST services, package servers implicitly distinguish between abstract _resources_ and concrete _representations_. A resource is a conceptual target identified by a URL; a representation of a resource is a physical materialization in some known format of a version of that resource at a point in time. The REST API interfaces between the two, resolving requests for resources into concrete representations.
 
-Abstractly, an assertion is a set of graphs of relations between entities; concretely they are represented as either [N-Quads](https://www.w3.org/TR/n-quads/) files or [JSON-LD](https://www.w3.org/TR/json-ld11) documents. Similarly, a package is a resource that contains other resources. Package representations also use RDF; however, unlike an assertion, whose representation is an entire RDF dataset, a package representation is a specific blank node (called the _package subject_) within an RDF dataset (containing triples that describe the package metadata and contents using this package subject). 
-
-Representing a package subject is challenging because RDF blank nodes are anonymous by design. Package servers solve this by leveraging the [Universal Dataset Normalization Algorithm](https://json-ld.github.io/normalization/spec/) (URDNA2015) published by the [W3C Credentials Community Group](https://www.w3.org/community/credentials/), which serializes an abstract RDF dataset to a normalized N-Quads representation. The normalized result is canonical in the sense that any two isomorphic datasets will map to exactly the same representation. Part of the algorithm involves assigning canonical labels to every blank node in the dataset, so package servers use this canonical blank node label as fragment identifiers in a `Link` header with `rel="self"` to unambiguously represent packages. In most cases, the link target will be `<#c14n0>`, since the package subject will typically be the only blank node in the dataset.
-
 ## Headers
 
 This section describes the request and response headers expected of package servers.
@@ -48,7 +44,7 @@ In addition to identifying package subjects, package servers also use [`Link` he
 This missing context is represented with a single `Link` header field:
 - `Link: <http://underlay.org/ns#File>; rel="type"` indicates that the identified resource is a file
 - `Link: <http://underlay.org/ns#Assertion>; rel="type"` indicates that the identified resource is an assertion, represented by the accompanying dataset
-- `Link: <http://underlay.org/ns#Package>; rel="type", <#c14n0>; rel="self"` indicates that the identified resource is a package, represented by the blank node with canonical label `_:c14n0` in the accompanying dataset. Note that the self link target does not include the `_:` prefix, and although it will not always be strictly `#c14n0`, it will always match `/^#c14n\d+$/`.
+- `Link: <http://underlay.org/ns#Package>; rel="type"` indicates that the identified resource is a package.
 
 `Link` headers appear in both requests (`POST`, `PUT`, `DELETE`) and responses (`HEAD`, `GET`).
 
@@ -56,27 +52,11 @@ This missing context is represented with a single `Link` header field:
 
 Every instance of a resource representation has an associated [entity-tag](https://en.wikipedia.org/wiki/HTTP_ETag), an opaque identifier that can be re-used to make conditional requests.
 
-Package servers use IPFS UnixFS file CIDv1s in base 32 for each resource representation as its opaque entity-tag. [UnixFS](https://docs.ipfs.io/concepts/file-systems) is the default [protocol buffer](https://github.com/ipfs/go-unixfs/blob/master/pb/unixfs.proto)-based format for files used in IPFS; [CIDs](https://github.com/multiformats/cid#human-readable-cids) are self-describing content-hash identifiers.
+Package servers use CIDv1s in base 32 for each resource representation as its opaque entity-tag. [CIDs](https://github.com/multiformats/cid) are self-describing content-hash identifiers. Per [RFC 7232](https://tools.ietf.org/html/rfc7232#section-2.3), entity-tags are wrapped in quotation marks.
 
-For representations of file resources, the file itself is used as the contents of the UnixFS file; for assertions and packages, the dataset representation is normalized using the URDNA2015 algorithm and the N-Quads string is used as the contents of the UnixFS file.
-
-Package servers **use the non-default option `raw-leaves`** when creating UnixFS files.
-UnixFS files are split by default into 262144-byte chunks, which are linked from intermediate nodes to form a [merkle tree](https://en.wikipedia.org/wiki/Merkle_tree). 
-
-The entity-tag for a file can be computed using the [IPFS CLI tool](https://docs.ipfs.io/reference/cli/#ipfs-add) 
-```
-$ echo 'Hello World' > foo
-$ ipfs add --only-hash --raw-leaves --chunker size-262144 --cid-version 1 foo
-added bafkreigsvbhuxc3fbe36zd3tzwf6fr2k3vnjcg5gjxzhiwhnqiu5vackey foo
- 12 B / 12 B [=========================================================] 100.00%
-```
-
-The resulting the `ETag` field for this file would be:
 ```
 ETag: "bafkreigsvbhuxc3fbe36zd3tzwf6fr2k3vnjcg5gjxzhiwhnqiu5vackey"
 ```
-
-Note that entity-tags, per [RFC 7232](https://tools.ietf.org/html/rfc7232#section-2.3), are wrapped in quotation marks.
 
 Package servers do not use weak entity-tags.
 
