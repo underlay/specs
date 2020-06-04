@@ -12,11 +12,11 @@ Underlay packages are represented locally as a file hierarchy under a `.underlay
 
 ## Package-level assertions
 
-> `.underlay/.package`
+> `.underlay/package`
 
 A package's source of truth is the `.underlay/package` folder.
 
-Assertions are the fundamental unit of data in the Underlay; rather than carrying a snapshot of a dataset's state, packages carry a log of assertions representing its incremental evolution. Given this log, anyone can construct a materialized "state" by _reducing_ over the assertions with respect to a schema.
+Assertions are the fundamental unit of data in the Underlay; rather than carrying a snapshot of a dataset's state, packages carry a log of assertions representing its incremental evolution. Given this log, anyone can construct a materialized "state" by [_reducing_](reduction.md) over the assertions with respect to a schema.
 
 The Underlay also uses the same approach - reducing assertions into a state - to represent and manage packages themselves. This means that packages aren't defined with a manifest or `package.json` file; instead, packages are defined by the `.underlay/package` _folder_. Inside this folder are JSON-LD "package assertions", each describing a positive, declarative update to the package, like adding a resource or setting the description. These package assertions are reduced over the fixed schema `package.shex` to produce the package state in the `.underlay/index.jsonld` file.
 
@@ -26,13 +26,13 @@ For example, a package made up of three package assertions might have a file str
 
 ```
 - .underlay/
-  - .package/
+  - package/
     - 1590077244008.bafkreie5o35s2los3qbutiy22gtb2ejd5tkmicc7ddjsfc3yairxmcbfyy.jsonld
     - 1590077968922.bafkreiff5vhxqsw3o6ovvgywww2etkld2h6muvip7gwzsxcr4eu6p4kbou.jsonld
     - 1590246664266.bafkreifpmzrev2mvtgc5afm4mwuozjbym6nvsohs7f6ejh2vt77x4gdq5q.jsonld
 ```
 
-Packages, the package schema, and package assertions are described in more detail [here](package_schema.md).
+Packages, the package schema, and package assertions are described in more detail in [package_schema.md](package_schema.md).
 
 This single level of recursion automatically unlocks some powerful features. Users might want to know both what a package says was true at a certain time ("John lived in Reno in 1990") and _also_ how that value changed throughout a package's history ("We later find out from a more credible source that he actually lived in Carson City"). In databases this is called bitemporal modelling; here it follows naturally from the package representation.
 
@@ -46,7 +46,7 @@ In order to achieve this, the package schema `package.shex` that the package-lev
 
 The contents of `.underlay/package` are reduced over `package.shex` to construct the package state; this result is framed to produce a JSON-LD document which is written to `.underlay/index.jsonld`. This is what gets served in the REST API to GET requests at package paths.
 
-Packages and package assertions are described in more detail [here](packages.md).
+Packages and package assertions are described in more detail in [packages.md](packages.md).
 
 ## Ground-level assertions
 
@@ -60,7 +60,7 @@ For example, in a package with resource URI `http://example.com/hello` with one 
 
 ```
 - .underlay/
-  - .package/
+  - package/
     - 1590077244008.bafkreie5o35s2los3qbutiy22gtb2ejd5tkmicc7ddjsfc3yairxmcbfyy.jsonld
     - 1590077968922.bafkreiff5vhxqsw3o6ovvgywww2etkld2h6muvip7gwzsxcr4eu6p4kbou.jsonld
     - 1590246664266.bafkreifpmzrev2mvtgc5afm4mwuozjbym6nvsohs7f6ejh2vt77x4gdq5q.jsonld
@@ -76,7 +76,7 @@ Files act just like assertions, except unnamed files have no file extension in t
 
 ```
 - .underlay/
-  - .package/
+  - package/
     - 1590077244008.bafkreie5o35s2los3qbutiy22gtb2ejd5tkmicc7ddjsfc3yairxmcbfyy.jsonld
     - 1590077968922.bafkreiff5vhxqsw3o6ovvgywww2etkld2h6muvip7gwzsxcr4eu6p4kbou.jsonld
     - 1590246664266.bafkreifpmzrev2mvtgc5afm4mwuozjbym6nvsohs7f6ejh2vt77x4gdq5q.jsonld
@@ -90,26 +90,26 @@ Files act just like assertions, except unnamed files have no file extension in t
 
 > `.underlay/*/*`
 
-Assertions and files are referenced by their content-hash, while subpackages are referenced by the hash of their own `.package` folder - in other words, a package "version" is just a specific set of package assertions.
+Assertions and files are referenced by their content-hash, while subpackages are referenced by the hash of their own `package` folder - in other words, a package "version" is just a specific set of package assertions.
 
-After the package assertions are reduced to construct the package state, subpackage references are retrieved (again using IPFS) to create `[name]/.package` folders, where `[name]` is the last path element of the subpackage's resource URI. These subpackages are recursively expanded: their own package-level assertions get reduced, their own ground-level assertions are retrieved, and so on.
+After the package assertions are reduced to construct the package state, subpackage references are retrieved (again using IPFS) to create `[name]/package` folders, where `[name]` is the last path element of the subpackage's resource URI. These subpackages are recursively expanded: their own package-level assertions get reduced, their own ground-level assertions are retrieved, and so on.
 
 For example, if we add as subpackages `http://example.com/hello/foo` and `http://pets.com/bar`, our folder structure would look something like
 
 ```
 - .underlay/
-  - .package/
+  - package/
     - 1590077244008.bafkreie5o35s2los3qbutiy22gtb2ejd5tkmicc7ddjsfc3yairxmcbfyy.jsonld
     - 1590077968922.bafkreiff5vhxqsw3o6ovvgywww2etkld2h6muvip7gwzsxcr4eu6p4kbou.jsonld
     - 1590246664266.bafkreifpmzrev2mvtgc5afm4mwuozjbym6nvsohs7f6ejh2vt77x4gdq5q.jsonld
   - foo/
-    - .package/
+    - package/
     - foo-assertion-1.jsonld
     - foo-file-1.csv
   - bar/
-    - .package/
+    - package/
     - baz/
-      - .package/
+      - package/
     - bar-assertion-1.jsonld
     - bar-file-1.pdf
   - a.jsonld
